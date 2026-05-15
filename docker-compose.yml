@@ -1,0 +1,57 @@
+version: "3.9"
+
+networks:
+  dev:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+     - './nginx.conf:/etc/nginx/nginx.conf'
+    depends_on:
+      - server
+      - client
+    networks:
+      - dev
+
+  # =========================
+  # BACKEND
+  # =========================
+  server:
+    build:
+      context: ./server
+    networks:
+      - dev
+    container_name: education-server
+    restart: always
+
+    ports:
+      - "3001:3001"
+
+    volumes:
+      - ./server/uploads:/app/uploads
+
+    environment:
+      - NODE_ENV=production
+
+  # =========================
+  # FRONTEND
+  # =========================
+  client:
+    build:
+      context: ./client
+    networks:
+      - dev
+    container_name: education-client
+    restart: always
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      - NEXT_PUBLIC_API=http://server:3001
+
+    depends_on:
+      - server
