@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Advantages from "./components/Advantages";
+import Cities from "./components/Cities";
 
 export default function Home() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export default function Home() {
       {/* ================= HERO ================= */}
       <main className="flex-1 flex items-center justify-center px-6">
 
-        <div className="max-w-5xl w-full grid md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-5xl w-full grid md:grid-cols-2 gap-12 items-center mb-10">
 
           {/* LEFT */}
           <div>
@@ -109,7 +111,10 @@ export default function Home() {
           </div>
         </div>
       </main>
-
+      {/* ================= Advantages ================= */}
+      <Advantages />
+      {/* ================= Cities ================= */}
+      <Cities/>
       {/* ================= FOOTER ================= */}
       <Footer />
     </div>

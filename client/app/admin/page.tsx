@@ -163,454 +163,520 @@ const saveEdit = async () => {
 };
 
   return (
-    <div className="min-h-screen bg-gray-100  text-black">
-      <Header />
+<div className="min-h-screen bg-[#f4f7fb] text-black">
 
-      <h1 className="text-2xl font-bold mb-6">
-        🛠 Админка университетов
+  <Header />
+
+  <main className="max-w-7xl mx-auto px-6 py-10">
+
+    {/* ================= HERO ================= */}
+    <div className="mb-10">
+
+      <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-semibold mb-5">
+        🛠 AI Admin Panel
+      </div>
+
+      <h1 className="text-5xl font-black leading-tight mb-4">
+        Управление
+        <span className="text-blue-500"> университетами</span>
       </h1>
 
-      {/* ================= FORM ================= */}
-<div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
+      <p className="text-gray-600 text-lg max-w-3xl">
+        Добавляйте, редактируйте и управляйте университетами,
+        специальностями и рекомендациями для AI платформы.
+      </p>
+    </div>
 
-  <h2 className="text-xl font-bold mb-6">
-    ➕ Добавить университет
+    {/* ================= STATS ================= */}
+    <div className="grid md:grid-cols-3 gap-6 mb-10">
+
+      <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+        <div className="text-4xl mb-3">🏫</div>
+
+        <div className="text-3xl font-black">
+          {list.length}
+        </div>
+
+        <div className="text-gray-500 mt-1">
+          Университетов
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+        <div className="text-4xl mb-3">🎓</div>
+
+        <div className="text-3xl font-black">
+          AI
+        </div>
+
+        <div className="text-gray-500 mt-1">
+          Smart система
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+        <div className="text-4xl mb-3">📚</div>
+
+        <div className="text-3xl font-black">
+          EduGuide
+        </div>
+
+        <div className="text-gray-500 mt-1">
+          Admin dashboard
+        </div>
+      </div>
+    </div>
+
+    {/* ================= FORM ================= */}
+    <div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 p-8 mb-12">
+
+      <div className="flex items-center gap-4 mb-8">
+
+        <div className="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-3xl">
+          ➕
+        </div>
+
+        <div>
+          <h2 className="text-3xl font-black">
+            Добавить университет
+          </h2>
+
+          <p className="text-gray-500">
+            Заполните информацию об учебном заведении
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+
+        {/* INPUT STYLE */}
+        {[
+          {
+            label: "🏫 Название",
+            value: form.name,
+            key: "name"
+          },
+          {
+            label: "🏙 Город",
+            value: form.city,
+            key: "city"
+          },
+          {
+            label: "📍 Адрес",
+            value: form.address,
+            key: "address"
+          },
+          {
+            label: "🌐 Сайт",
+            value: form.website,
+            key: "website"
+          },
+          {
+            label: "📞 Контакты",
+            value: form.contacts,
+            key: "contacts"
+          }
+        ].map((field: any) => (
+          <div key={field.key}>
+            <label className="text-sm font-medium text-gray-500 block mb-2">
+              {field.label}
+            </label>
+
+            <input
+              value={field.value}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  [field.key]: e.target.value
+                })
+              }
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+            />
+          </div>
+        ))}
+
+        {/* LARGE INPUTS */}
+        {[
+          {
+            label: "🏛 Факультеты",
+            value: form.faculty,
+            key: "faculty"
+          },
+          {
+            label: "🎓 Специальности",
+            value: form.specialties,
+            key: "specialties"
+          },
+          {
+            label: "📜 Квалификация",
+            value: form.qualification,
+            key: "qualification"
+          },
+          {
+            label: "📚 Предметы",
+            value: form.subjects,
+            key: "subjects"
+          },
+          {
+            label: "🔥 Интересы",
+            value: form.interests,
+            key: "interests"
+          }
+        ].map((field: any) => (
+          <div key={field.key} className="md:col-span-2">
+
+            <label className="text-sm font-medium text-gray-500 block mb-2">
+              {field.label}
+            </label>
+
+            <input
+              value={field.value}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  [field.key]: e.target.value
+                })
+              }
+              placeholder="через запятую"
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+            />
+          </div>
+        ))}
+
+        {/* IMAGE */}
+        <div className="md:col-span-2">
+
+          <label className="text-sm font-medium text-gray-500 block mb-3">
+            🖼 Фото университета
+          </label>
+
+          <div className="border-2 border-dashed border-gray-300 rounded-3xl p-6 bg-gray-50">
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFile}
+              className="w-full"
+            />
+
+            {form.image && (
+              <img
+                src={form.image}
+                alt="preview"
+                className="mt-5 w-full h-[280px] object-cover rounded-2xl shadow"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={add}
+        className="w-full mt-8 bg-blue-500 hover:bg-blue-600 transition text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-blue-200"
+      >
+        💾 Сохранить университет
+      </button>
+    </div>
+
+    {/* ================= LIST ================= */}
+<div className="space-y-8">
+
+  {list.map((i) => (
+
+    <div
+      key={i._id}
+      className="bg-white rounded-[32px] shadow-xl border border-gray-100 p-8"
+    >
+
+{/* TITLE */}
+<div className="mb-8">
+
+  <h2 className="text-4xl font-black mb-4">
+    🏫 {i.name}
   </h2>
 
-  <div className="grid grid-cols-2 gap-4">
+  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm">
+    📍 {i.city}
+  </div>
+</div>
 
-    {/* NAME */}
-    <div className="col-span-2">
-      <label htmlFor="name" className="text-sm text-gray-500">🏫 Название</label>
-      <input
-        id="name"
-        name="name"
-        autoComplete="organization"
-        value={form.name}
-        onChange={e => setForm({ ...form, name: e.target.value })}
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
+{/* MAIN CONTENT */}
+<div className="flex flex-col lg:flex-row justify-between gap-10 items-start mb-10">
+
+  {/* LEFT CONTENT */}
+  <div className="flex-1 space-y-4">
 
     {/* CITY */}
-    <div>
-      <label htmlFor="city" className="text-sm text-gray-500">🏙 Город</label>
-      <input
-        id="city"
-        name="city"
-        autoComplete="address-level2"
-        value={form.city}
-        onChange={e => setForm({ ...form, city: e.target.value })}
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
+    <div className="bg-gray-50 rounded-2xl p-4">
+      <div className="font-semibold mb-1">
+        🏙 Город
+      </div>
 
-    {/* ADDRESS */}
-    <div>
-      <label htmlFor="address" className="text-sm text-gray-500">📍 Адрес</label>
-      <input
-        id="address"
-        name="address"
-        autoComplete="street-address"
-        value={form.address}
-        onChange={e => setForm({ ...form, address: e.target.value })}
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
+      <div className="text-gray-600 text-sm">
+        {i.city}
+      </div>
     </div>
 
     {/* WEBSITE */}
-    <div>
-      <label htmlFor="website" className="text-sm text-gray-500">🌐 Сайт</label>
-      <input
-        id="website"
-        name="website"
-        autoComplete="url"
-        value={form.website}
-        onChange={e => setForm({ ...form, website: e.target.value })}
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
+    {i.website && (
+      <div className="bg-gray-50 rounded-2xl p-4">
+
+        <div className="font-semibold mb-1">
+          🌐 Сайт
+        </div>
+
+        <a
+          href={i.website}
+          target="_blank"
+          className="text-blue-500 underline break-all text-sm"
+        >
+          {i.website}
+        </a>
+      </div>
+    )}
+
+    {/* ADDRESS */}
+    {i.address && (
+      <div className="bg-gray-50 rounded-2xl p-4">
+
+        <div className="font-semibold mb-1">
+          📍 Адрес
+        </div>
+
+        <div className="text-gray-600 text-sm">
+          {i.address}
+        </div>
+      </div>
+    )}
 
     {/* CONTACTS */}
-    <div>
-      <label htmlFor="contacts" className="text-sm text-gray-500">📞 Контакты</label>
-      <input
-        id="contacts"
-        name="contacts"
-        autoComplete="tel"
-        value={form.contacts}
-        onChange={e => setForm({ ...form, contacts: e.target.value })}
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
+    {i.contacts && (
+      <div className="bg-gray-50 rounded-2xl p-4">
 
-    {/* FACULTY */}
-    <div className="col-span-2">
-      <label htmlFor="faculty" className="text-sm text-gray-500">🏛 Факультеты</label>
-      <input
-        id="faculty"
-        name="faculty"
-        autoComplete="off"
-        value={form.faculty}
-        onChange={e => setForm({ ...form, faculty: e.target.value })}
-        placeholder="через запятую"
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
+        <div className="font-semibold mb-1">
+          📞 Контакты
+        </div>
 
-    {/* SPECIALTIES */}
-    <div className="col-span-2">
-      <label htmlFor="specialties" className="text-sm text-gray-500">🎓 Специальности</label>
-      <input
-        id="specialties"
-        name="specialties"
-        autoComplete="off"
-        value={form.specialties}
-        onChange={e => setForm({ ...form, specialties: e.target.value })}
-        placeholder="через запятую"
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
-
-    {/* QUALIFICATION */}
-    <div className="col-span-2">
-      <label htmlFor="qualification" className="text-sm text-gray-500">📜 Квалификация</label>
-      <input
-        id="qualification"
-        name="qualification"
-        autoComplete="off"
-        value={form.qualification}
-        onChange={e => setForm({ ...form, qualification: e.target.value })}
-        placeholder="через запятую"
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
-
-    {/* SUBJECTS */}
-    <div className="col-span-2">
-      <label htmlFor="subjects" className="text-sm text-gray-500">📚 Предметы</label>
-      <input
-        id="subjects"
-        name="subjects"
-        autoComplete="off"
-        value={form.subjects}
-        onChange={e => setForm({ ...form, subjects: e.target.value })}
-        placeholder="через запятую"
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
-
-    {/* INTERESTS */}
-    <div className="col-span-2">
-      <label htmlFor="interests" className="text-sm text-gray-500">🔥 Интересы</label>
-      <input
-        id="interests"
-        name="interests"
-        autoComplete="off"
-        value={form.interests}
-        onChange={e => setForm({ ...form, interests: e.target.value })}
-        placeholder="через запятую"
-        className="w-full border p-2 rounded-lg mt-1 focus:ring-2 focus:ring-black outline-none"
-      />
-    </div>
-
-    {/* IMAGE */}
-    <div className="col-span-2">
-      <label htmlFor="image" className="text-sm text-gray-500">🖼 Фото</label>
-      <input
-        id="image"
-        name="image"
-        autoComplete="off"
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="w-full border p-2 rounded-lg mt-1"
-      />
-
-      {form.image && (
-        <img
-          src={form.image}
-          alt="preview"
-          className="mt-3 w-full h-40 object-cover rounded-xl"
-        />
-      )}
-    </div>
-
+        <div className="text-gray-600 text-sm">
+          {i.contacts}
+        </div>
+      </div>
+    )}
   </div>
 
-  <button
-    onClick={add}
-    className="w-full mt-6 bg-black text-white py-3 rounded-xl font-semibold hover:opacity-90 transition"
-  >
-    💾 Сохранить университет
-  </button>
+  {/* RIGHT IMAGE */}
+  <div className="flex-shrink-0">
 
-</div>
-      {/* ================= LIST ================= */}
-      <div className="space-y-4">
-        
-        {list.map(i => (
-          
-<div key={i._id} className="bg-white p-4 rounded-xl shadow flex gap-4">
-
-  {/* LEFT: TEXT */}
-  <div className="flex-1">
-
-    <div className="text-lg font-semibold">{i.name}</div>
-    <div className="text-sm text-gray-500">Город: {i.city}</div>
-
-    <div className="text-sm mt-2">📍Адрес:  {i.address}</div>
-    <div className="text-sm mt-2">🌐 Вебсайт:  {i.website}</div>
-    <div className="text-sm mt-2">📞 Контакты: {i.contacts}</div>
-
-
-     <div className="text-sm mt-2">
-  🏛️ Факультеты: {toString(i.faculty)}
-</div>
-
-<div className="text-sm mt-2">
-  🎓 Специальности: {toString(i.specialties)}
-</div>
-
-<div className="text-sm mt-2">
-  📜 Квалификация: {toString(i.qualification)}
-</div>
-
-    <div className="text-sm mt-2">
-      📚 Предметы: {toString(i.subjects)}
-    </div>
-
-    <div className="text-sm mt-2">
-      🔥 Интересы: {toString(i.interests)}
-    </div>
-
-    <div className="flex gap-2 mt-3">
-      <button
-        onClick={() =>
-          setEditing({
-            _id: i._id,
-            name: i.name || "",
-            city: i.city || "",
-            address: i.address || "",
-            website: i.website || "",
-            contacts: i.contacts || "",
-            specialties: toString(i.specialties),
-            subjects: toString(i.subjects),
-            interests: toString(i.interests),
-            image: i.image || "",
-            qualification: toString(i.qualification),
-            faculty: toString(i.faculty)
-          })
-        }
-        className="px-3 py-1 bg-blue-500 text-white rounded"
-      >
-        ✏️ Edit
-      </button>
-
-      <button
-        onClick={() => remove(i._id)}
-        className="px-3 py-1 bg-red-500 text-white rounded"
-      >
-        🗑 Delete
-      </button>
-    </div>
-
+    {i.image ? (
+      <img
+        src={i.image}
+        alt={i.name}
+        className="w-72 h-52 object-cover rounded-3xl shadow-xl border border-gray-200"
+      />
+    ) : (
+      <div className="w-72 h-52 rounded-3xl bg-gray-100 flex items-center justify-center text-6xl">
+        🏫
+      </div>
+    )}
   </div>
-
-  {/* RIGHT: IMAGE */}
-  {i.image && (
-    <img
-      src={i.image}
-      alt={i.name}
-      className="w-40 h-32 object-cover rounded-xl border"
-    />
-  )}
-
 </div>
+
+
+      {/* TAGS */}
+      <div className="space-y-5">
+
+        {[
+          ["🏛 Факультеты", i.faculty],
+          ["🎓 Специальности", i.specialties],
+          ["📜 Квалификация", i.qualification],
+          ["📚 Предметы", i.subjects],
+          ["🔥 Интересы", i.interests]
+        ].map(([title, value]: any, idx) => (
+
+          <div key={idx}>
+
+            <div className="font-semibold mb-3 text-lg">
+              {title}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+
+              {toString(value)
+                .split(",")
+                .filter(Boolean)
+                .map((item: string, index: number) => (
+
+                  <div
+                    key={index}
+                    className="px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-medium"
+                  >
+                    {item.trim()}
+                  </div>
+                ))}
+            </div>
+          </div>
         ))}
       </div>
 
-{/* ================= MODAL ================= */}
-{editing && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-
-    <div className="bg-white p-6 rounded-xl w-[420px] max-h-[90vh] overflow-y-auto space-y-3">
-
-      <h2 className="text-lg font-bold mb-2">
-        ✏️ Редактирование университета
-      </h2>
-
-      {/* NAME */}
-      <div>
-  <label htmlFor="nameEdit" className="text-sm text-gray-500">
-    🏫 Название
-  </label>
-
-  <input
-    id="nameEdit"
-    name="name"
-    autoComplete="organization"
-    value={editing.name || ""}
-    onChange={e => setEditing({ ...editing, name: e.target.value })}
-    className="w-full border p-2 rounded"
-  />
-</div>
-
-      {/* CITY */}
-      <div>
-  <label htmlFor="cityEdit" className="text-sm text-gray-500">
-    🏙 Город
-  </label>
-
-  <input
-    id="cityEdit"
-    name="city"
-    autoComplete="address-level2"
-    value={editing.city || ""}
-    onChange={e => setEditing({ ...editing, city: e.target.value })}
-    className="w-full border p-2 rounded"
-  />
-</div>
-
-      {/* ADDRESS */}
-      <div>
-  <label htmlFor="addressEdit" className="text-sm text-gray-500">
-    📍 Адрес
-  </label>
-
-  <input
-    id="addressEdit"
-    name="address"
-    autoComplete="street-address"
-    value={editing.address || ""}
-    onChange={e => setEditing({ ...editing, address: e.target.value })}
-    className="w-full border p-2 rounded"
-  />
-</div>
-      {/* WEBSITE */}
-      <div>
-        <div className="text-sm text-gray-500">🌐 Сайт</div>
-        <input
-          id="websiteEdit"
-          name="website"
-          autoComplete="url"
-          value={editing.website || ""}
-          onChange={e => setEditing({ ...editing, website: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      {/* CONTACTS */}
-      <div>
-        <div className="text-sm text-gray-500">📞 Контакты</div>
-        <input
-          id="contactsEdit"
-          name="contacts"
-          autoComplete="tel"
-          value={editing.contacts || ""}
-          onChange={e => setEditing({ ...editing, contacts: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      {/* facultys */}
-      <div>
-        <div className="text-sm text-gray-500">🎓 Факультеты</div>
-        <input
-          autoComplete="off"
-          id="facultyEdit"
-          name="faculty"
-          value={editing.faculty || ""}
-          onChange={e => setEditing({ ...editing, faculty: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      {/* SPECIALTIES */}
-      <div>
-        <div className="text-sm text-gray-500">🎓 Специальности</div>
-        <input
-        autoComplete="off"
-          id="specialtiesEdit"
-          name="specialties"
-          value={editing.specialties || ""}
-          onChange={e => setEditing({ ...editing, specialties: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-       {/* qualifications*/}
-      <div>
-        <div className="text-sm text-gray-500">🎓 Квалификации</div>
-        <input
-        autoComplete="off"
-          id="qualificationEdit"
-          name="qualification"
-          value={editing.qualification || ""}
-          onChange={e => setEditing({ ...editing, qualification: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      {/* SUBJECTS */}
-      <div>
-        <div className="text-sm text-gray-500">📚 Предметы</div>
-        <input
-        autoComplete="off"
-          id="subjectsEdit"
-          name="subjects"
-          value={editing.subjects || ""}
-          onChange={e => setEditing({ ...editing, subjects: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      {/* INTERESTS */}
-      <div>
-        <div className="text-sm text-gray-500">🔥 Интересы</div>
-        <input
-        autoComplete="off"
-          id="interestsEdit"
-          name="interests"
-          value={editing.interests || ""}
-          onChange={e => setEditing({ ...editing, interests: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      {/* IMAGE */}
-{/* IMAGE EDIT */}
-<div>
-  <label htmlFor="imageEdit" className="text-sm text-gray-500">
-    🖼 Фото
-  </label>
-
-  <input
-    id="imageEdit"
-    name="image"
-    type="file"
-    accept="image/*"
-    autoComplete="off"
-    onChange={handleEditFile}
-    className="w-full border p-2 rounded"
-  />
-
-  {editing.image && (
-    <img
-      src={editing.image}
-      alt="preview"
-      className="w-full h-40 object-cover rounded mt-2"
-    />
-  )}
-</div>
-
       {/* BUTTONS */}
-      <div className="flex gap-2 pt-3">
+      <div className="flex gap-4 mt-10">
+
+        <button
+          onClick={() =>
+            setEditing({
+              _id: i._id,
+              name: i.name || "",
+              city: i.city || "",
+              address: i.address || "",
+              website: i.website || "",
+              contacts: i.contacts || "",
+              specialties: toString(i.specialties),
+              subjects: toString(i.subjects),
+              interests: toString(i.interests),
+              image: i.image || "",
+              qualification: toString(i.qualification),
+              faculty: toString(i.faculty)
+            })
+          }
+          className="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 transition text-white font-semibold shadow-lg shadow-blue-200"
+        >
+          ✏️ Редактировать
+        </button>
+
+        <button
+          onClick={() => remove(i._id)}
+          className="px-6 py-3 rounded-2xl bg-red-500 hover:bg-red-600 transition text-white font-semibold shadow-lg shadow-red-200"
+        >
+          🗑 Удалить
+        </button>
+      </div>
+
+    </div>
+  ))}
+</div> 
+  </main>
+  {/* ================= EDIT MODAL ================= */}
+{editing && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+
+    <div className="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+
+      {/* HEADER */}
+      <div className="p-8 border-b border-gray-100">
+
+        <div className="flex items-center justify-between">
+
+          <div>
+            <h2 className="text-3xl font-black mb-2">
+              ✏️ Редактирование
+            </h2>
+
+            <p className="text-gray-500">
+              Изменение информации об университете
+            </p>
+          </div>
+
+          <button
+            onClick={() => setEditing(null)}
+            className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 transition text-xl"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="p-8 grid md:grid-cols-2 gap-6">
+
+        {[
+          ["🏫 Название", "name"],
+          ["🏙 Город", "city"],
+          ["📍 Адрес", "address"],
+          ["🌐 Сайт", "website"],
+          ["📞 Контакты", "contacts"],
+        ].map(([label, key]: any) => (
+          <div key={key}>
+
+            <label className="text-sm font-medium text-gray-500 block mb-2">
+              {label}
+            </label>
+
+            <input
+              value={editing[key] || ""}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  [key]: e.target.value
+                })
+              }
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            />
+          </div>
+        ))}
+
+        {[
+          ["🏛 Факультеты", "faculty"],
+          ["🎓 Специальности", "specialties"],
+          ["📜 Квалификация", "qualification"],
+          ["📚 Предметы", "subjects"],
+          ["🔥 Интересы", "interests"],
+        ].map(([label, key]: any) => (
+          <div key={key} className="md:col-span-2">
+
+            <label className="text-sm font-medium text-gray-500 block mb-2">
+              {label}
+            </label>
+
+            <input
+              value={editing[key] || ""}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  [key]: e.target.value
+                })
+              }
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            />
+          </div>
+        ))}
+
+        {/* IMAGE */}
+        <div className="md:col-span-2">
+
+          <label className="text-sm font-medium text-gray-500 block mb-3">
+            🖼 Фото
+          </label>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleEditFile}
+            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3"
+          />
+
+          {editing.image && (
+            <img
+              src={editing.image}
+              alt="preview"
+              className="mt-5 w-full h-[260px] object-cover rounded-3xl"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="p-8 border-t border-gray-100 flex gap-4">
+
         <button
           onClick={saveEdit}
-          className="flex-1 bg-green-500 text-white py-2 rounded"
+          className="flex-1 bg-blue-500 hover:bg-blue-600 transition text-white py-4 rounded-2xl font-bold"
         >
           💾 Сохранить
         </button>
 
         <button
           onClick={() => setEditing(null)}
-          className="flex-1 bg-gray-400 text-white py-2 rounded"
+          className="flex-1 bg-gray-100 hover:bg-gray-200 transition py-4 rounded-2xl font-bold"
         >
           Отмена
         </button>
@@ -619,7 +685,6 @@ const saveEdit = async () => {
     </div>
   </div>
 )}
-
-    </div>
+</div>
   );
 }
