@@ -8,6 +8,7 @@ const InstitutionSchema = new mongoose.Schema({
   website: String,
   contacts: String,
   image: String,
+  ownerId: String,
 
   specialties: [String],
   subjects: [String],

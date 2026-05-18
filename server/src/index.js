@@ -67,6 +67,7 @@ app.post("/institutions", upload.single("image"), async (req, res) => {
 
     const safeCreate = {
       ...body,
+      ownerId: body.ownerId,
       image: imageUrl,
 
       faculty: (body.faculty || "").split(",").map(s => s.trim()).filter(Boolean),

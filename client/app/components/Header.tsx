@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { GraduationCap, ChevronDown} from "lucide-react";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { GraduationCap, ChevronDown, LogIn, LogOut} from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function Header() {
   const [openCities, setOpenCities] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+const [isAuth, setIsAuth] = useState(false);
 
 const cities = [
   {
@@ -33,6 +38,21 @@ const cities = [
     slug: "mogilev"
   }
 ];
+useEffect(() => {
+
+  const token = localStorage.getItem("admin_token");
+
+  setIsAuth(!!token);
+
+}, []);
+const logout = () => {
+
+  localStorage.removeItem("admin_token");
+
+  router.push("/");
+
+  window.location.reload();
+};
   return (
     <header className="w-full bg-white border-b shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -54,8 +74,11 @@ const cities = [
           </div>
         </Link>
 
-        {/* MENU */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-700">
+        {/* RIGHT SIDE */}
+<div className="hidden md:flex items-center gap-5">
+
+  {/* MENU */}
+  <nav className="flex items-center gap-8 text-sm font-medium text-gray-700">
 
 
 
@@ -83,7 +106,11 @@ const cities = [
   <Link
     key={city.slug}
     href={`/universities/${city.slug}`}
-    className="px-4 py-3 rounded-xl hover:bg-blue-50 hover:text-blue-500 transition"
+    className={`px-4 py-3 rounded-xl transition ${
+  pathname === `/universities/${city.slug}`
+    ? "bg-blue-500 text-white"
+    : "hover:bg-blue-50 hover:text-blue-500"
+}`}
   >
     {city.name}
   </Link>
@@ -95,26 +122,61 @@ const cities = [
   </div>
 
   <Link
-    href="/universities"
-    className="hover:text-blue-500 transition"
-  >
-    Университеты
-  </Link>
+  href="/universities"
+  className={`transition ${
+    pathname.startsWith("/universities")
+      ? "text-blue-500 font-bold"
+      : "hover:text-blue-500"
+  }`}
+>
+  Университеты
+</Link>
 
   <Link
-    href="/onboarding"
-    className="hover:text-blue-500 transition"
-  >
-    Тест
-  </Link>
+  href="/onboarding"
+  className={`transition ${
+    pathname === "/onboarding"
+      ? "text-blue-500 font-bold"
+      : "hover:text-blue-500"
+  }`}
+>
+  Тест
+</Link>
 
   <Link
-    href="/admin"
-    className="hover:text-blue-500 transition"
-  >
-    Админка
-  </Link>
+  href="/admin"
+  className={`transition ${
+    pathname === "/admin"
+      ? "text-blue-500 font-bold"
+      : "hover:text-blue-500"
+  }`}
+>
+  Админка
+</Link>
 </nav>
+{/* AUTH */}
+{isAuth ? (
+
+  <button
+    onClick={logout}
+    className="flex items-center gap-2 bg-red-500 hover:bg-red-600 transition text-white px-5 py-3 rounded-2xl font-semibold shadow-lg shadow-red-200"
+  >
+    <LogOut size={18} />
+    Выйти
+  </button>
+
+) : (
+
+  <Link
+    href="/login"
+    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 transition text-white px-5 py-3 rounded-2xl font-semibold shadow-lg shadow-blue-200"
+  >
+    <LogIn size={18} />
+    Войти
+  </Link>
+
+)}
+</div>
       </div>
     </header>
   );

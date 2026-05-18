@@ -1,14 +1,114 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function Admin() {
+  const router = useRouter();
   const [list, setList] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+
+
+  
+
+  useEffect(() => {
+  const token = localStorage.getItem("admin_token");
+
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem("admin_user") || "{}");
+
+  setCurrentUser(user); // 👈 ВОТ ЭТО ГЛАВНОЕ
+
+  load();
+
+  const storedUsers = JSON.parse(
+    localStorage.getItem("users") || "[]"
+  );
+
+  setUsers(storedUsers);
+}, []);
+const filteredList = useMemo(() => {
+  
+  if (!currentUser) return [];
+
+  if (currentUser.role === "superadmin") {
+    return list;
+  }
+
+  return list.filter(
+  (i) => String(i.ownerId) === String(currentUser.id)
+);
+}, [list, currentUser]);
+const getOwnerName = (ownerId: string) => {
+
+  if (ownerId === "superadmin") {
+    return "Super Admin";
+  }
+
+  const owner = users.find(
+    (u) => String(u.id) === String(ownerId)
+  );
+
+  return owner?.name || "Unknown";
+};
+  const toggleAccess = (id: number) => {
+
+    const updated = users.map((u) =>
+      u.id === id
+        ? {
+            ...u,
+            approved: !u.approved
+          }
+        : u
+    );
+
+    setUsers(updated);
+
+    localStorage.setItem(
+      "users",
+      JSON.stringify(updated)
+    );
+  };
+
+  const deleteUser = (id: number) => {
+
+  const updated = users.filter(
+    (u) => u.id !== id
+  );
+
+  setUsers(updated);
+
+  localStorage.setItem(
+    "users",
+    JSON.stringify(updated)
+  );
+};
+
+  // load users
+  useEffect(() => {
+
+    const saved = localStorage.getItem("users");
+
+    if (saved) {
+      setUsers(JSON.parse(saved));
+    }
+
+  }, []);
+
+  
+
   const [file, setFile] = useState<File | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
+
+  const [selectedCity, setSelectedCity] = useState("Все");
 
   const [form, setForm] = useState({
     name: "",
@@ -62,13 +162,14 @@ const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setList(data);
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
   // ================= ADD =================
   const add = async () => {
   const formData = new FormData();
+  const user = JSON.parse(
+  localStorage.getItem("admin_user") || "{}"
+  );
+
+  formData.append("ownerId", String(user.id));
 
   formData.append("name", form.name);
   formData.append("city", form.city);
@@ -81,15 +182,24 @@ const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
   formData.append("qualification", form.qualification);
   formData.append("subjects", form.subjects);
   formData.append("interests", form.interests);
+  
 
   if (file) {
     formData.append("image", file);
   }
 
-  await fetch("http://localhost:3001/institutions", {
-    method: "POST",
-    body: formData // ❗ НЕ JSON
-  });
+  // await fetch("http://localhost:3001/institutions", {
+  //   method: "POST",
+  //   body: formData // ❗ НЕ JSON
+  // });
+const res = await fetch("http://localhost:3001/institutions", {
+  method: "POST",
+  body: formData
+});
+
+const data = await res.json();
+
+console.log("CREATED:", data);
 
   setFile(null);
 
@@ -163,29 +273,62 @@ const saveEdit = async () => {
 };
 
   return (
+    
 <div className="min-h-screen bg-[#f4f7fb] text-black">
 
   <Header />
 
   <main className="max-w-7xl mx-auto px-6 py-10">
 
-    {/* ================= HERO ================= */}
-    <div className="mb-10">
+{/* ================= HERO ================= */}
+<div className="mb-10">
 
-      <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-semibold mb-5">
-        🛠 AI Admin Panel
+  {/* TOP ROW */}
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-6">
+
+    {/* HERO BADGE */}
+    <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-semibold w-fit">
+      🛠 AI Admin Panel
+    </div>
+
+    {/* FILTER */}
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex items-center gap-3 w-fit">
+
+      <div className="text-sm font-semibold text-gray-500">
+        🏙 Город:
       </div>
 
-      <h1 className="text-5xl font-black leading-tight mb-4">
-        Управление
-        <span className="text-blue-500"> университетами</span>
-      </h1>
+      <select
+        id={selectedCity}
+        name={selectedCity}
+        value={selectedCity}
+        onChange={(e) => setSelectedCity(e.target.value)}
+        className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-4 focus:ring-blue-100"
+      >
+        <option>Все</option>
+        <option>Минск</option>
+        <option>Брест</option>
+        <option>Витебск</option>
+        <option>Гомель</option>
+        <option>Гродно</option>
+        <option>Могилев</option>
+      </select>
 
-      <p className="text-gray-600 text-lg max-w-3xl">
-        Добавляйте, редактируйте и управляйте университетами,
-        специальностями и рекомендациями для AI платформы.
-      </p>
     </div>
+  </div>
+
+  {/* TITLE */}
+  <h1 className="text-5xl font-black leading-tight mb-4">
+    Управление
+    <span className="text-blue-500"> университетами</span>
+  </h1>
+
+  <p className="text-gray-600 text-lg max-w-3xl">
+    Добавляйте, редактируйте и управляйте университетами,
+    специальностями и рекомендациями для AI платформы.
+  </p>
+
+</div>
 
     {/* ================= STATS ================= */}
     <div className="grid md:grid-cols-3 gap-6 mb-10">
@@ -194,7 +337,7 @@ const saveEdit = async () => {
         <div className="text-4xl mb-3">🏫</div>
 
         <div className="text-3xl font-black">
-          {list.length}
+          {filteredList.length}
         </div>
 
         <div className="text-gray-500 mt-1">
@@ -226,7 +369,118 @@ const saveEdit = async () => {
         </div>
       </div>
     </div>
+{/* ================= USERS ================= */}
+{currentUser?.role === "superadmin" && (
+<div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 p-8 mb-10">
 
+  <div className="flex items-center justify-between mb-8">
+
+    <div>
+      <div className="text-sm font-semibold text-blue-500 mb-2">
+        👥 USERS
+      </div>
+
+      <h2 className="text-3xl font-black">
+        Зарегистрированные пользователи
+      </h2>
+    </div>
+
+    <div className="bg-blue-50 text-blue-600 px-4 py-2 rounded-2xl font-bold">
+      {users.length} пользователей
+    </div>
+  </div>
+
+  <div className="space-y-4">
+
+    {users.length > 0 ? (
+      users.map((user: any) => (
+
+        <div
+          key={user.id}
+          className="flex items-center justify-between bg-gray-50 rounded-2xl p-5 border border-gray-100"
+        >
+
+          {/* USER INFO */}
+          <div>
+            <div className="font-bold text-lg">
+              {user.name}
+            </div>
+
+            <div className="space-y-1 mt-2">
+
+  <div className="text-sm">
+    <span className="font-semibold">
+      👤 Имя:
+    </span>{" "}
+    {user.name}
+  </div>
+
+  <div className="text-sm text-gray-600">
+    <span className="font-semibold">
+      📧 Email:
+    </span>{" "}
+    {user.email}
+  </div>
+
+  <div className="text-sm text-gray-600">
+    <span className="font-semibold">
+      🔑 Пароль:
+    </span>{" "}
+    {user.password}
+  </div>
+
+</div>
+
+            <div className="mt-2">
+
+              {user.approved ? (
+                <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">
+                  ДОСТУП РАЗРЕШЕН
+                </span>
+              ) : (
+                <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">
+                  НЕТ ДОСТУПА
+                </span>
+              )}
+
+            </div>
+          </div>
+
+          {/* ACTIONS */}
+          <div className="flex gap-3">
+
+            <button
+              onClick={() => toggleAccess(user.id)}
+              className={`px-5 py-3 rounded-2xl text-white font-semibold transition ${
+                user.approved
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {user.approved
+                ? "🚫 Запретить"
+                : "✅ Разрешить"}
+            </button>
+
+            <button
+              onClick={() => deleteUser(user.id)}
+              className="px-5 py-3 rounded-2xl bg-black text-white font-semibold hover:opacity-80 transition"
+            >
+              🗑 Удалить
+            </button>
+
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="text-center py-10 text-gray-500">
+        Пользователей пока нет
+      </div>
+    )}
+
+  </div>
+</div>
+)}
     {/* ================= FORM ================= */}
     <div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 p-8 mb-12">
 
@@ -278,11 +532,14 @@ const saveEdit = async () => {
           }
         ].map((field: any) => (
           <div key={field.key}>
-            <label className="text-sm font-medium text-gray-500 block mb-2">
+            <label  htmlFor={field.key} className="text-sm font-medium text-gray-500 block mb-2">
               {field.label}
             </label>
 
             <input
+              id={field.key}
+              name={field.key}
+              autoComplete="off"
               value={field.value}
               onChange={(e) =>
                 setForm({
@@ -325,11 +582,14 @@ const saveEdit = async () => {
         ].map((field: any) => (
           <div key={field.key} className="md:col-span-2">
 
-            <label className="text-sm font-medium text-gray-500 block mb-2">
+            <label htmlFor={field.key} className="text-sm font-medium text-gray-500 block mb-2">
               {field.label}
             </label>
 
             <input
+              id={field.key}
+              name={field.key}
+              autoComplete="off"
               value={field.value}
               onChange={(e) =>
                 setForm({
@@ -346,13 +606,16 @@ const saveEdit = async () => {
         {/* IMAGE */}
         <div className="md:col-span-2">
 
-          <label className="text-sm font-medium text-gray-500 block mb-3">
+          <label htmlFor="image" className="text-sm font-medium text-gray-500 block mb-3">
             🖼 Фото университета
           </label>
 
           <div className="border-2 border-dashed border-gray-300 rounded-3xl p-6 bg-gray-50">
 
             <input
+              id="image"
+              name="image"
+              autoComplete="off"
               type="file"
               accept="image/*"
               onChange={handleFile}
@@ -381,7 +644,7 @@ const saveEdit = async () => {
     {/* ================= LIST ================= */}
 <div className="space-y-8">
 
-  {list.map((i) => (
+  {filteredList.map((i) => (
 
     <div
       key={i._id}
@@ -391,9 +654,18 @@ const saveEdit = async () => {
 {/* TITLE */}
 <div className="mb-8">
 
-  <h2 className="text-4xl font-black mb-4">
-    🏫 {i.name}
-  </h2>
+  <h2 className="text-4xl font-black mb-3">
+  🏫 {i.name}
+</h2>
+
+{currentUser?.role === "superadmin" && (
+  <div className="text-sm text-gray-500 mb-3 ml-2">
+    👤 Создал:{" "}
+    <span className="font-semibold text-blue-500 ">
+      {getOwnerName(i.ownerId)}
+    </span>
+  </div>
+)}
 
   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm">
     📍 {i.city}
@@ -597,11 +869,14 @@ const saveEdit = async () => {
         ].map(([label, key]: any) => (
           <div key={key}>
 
-            <label className="text-sm font-medium text-gray-500 block mb-2">
+            <label htmlFor={key} className="text-sm font-medium text-gray-500 block mb-2">
               {label}
             </label>
 
             <input
+              id={key}
+              name={key}
+              autoComplete="off"
               value={editing[key] || ""}
               onChange={(e) =>
                 setEditing({
@@ -623,11 +898,14 @@ const saveEdit = async () => {
         ].map(([label, key]: any) => (
           <div key={key} className="md:col-span-2">
 
-            <label className="text-sm font-medium text-gray-500 block mb-2">
+            <label htmlFor={key} className="text-sm font-medium text-gray-500 block mb-2">
               {label}
             </label>
 
             <input
+              id={key}
+              name={key}
+              autoComplete="off"
               value={editing[key] || ""}
               onChange={(e) =>
                 setEditing({
@@ -643,11 +921,14 @@ const saveEdit = async () => {
         {/* IMAGE */}
         <div className="md:col-span-2">
 
-          <label className="text-sm font-medium text-gray-500 block mb-3">
+          <label htmlFor="image" className="text-sm font-medium text-gray-500 block mb-3">
             🖼 Фото
           </label>
 
           <input
+            id="edit-image"
+            name="edit-image"
+            autoComplete="off"
             type="file"
             accept="image/*"
             onChange={handleEditFile}

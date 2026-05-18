@@ -5,12 +5,57 @@ import { useStore } from "@/store/useStore";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
+const normalize = (v: string) =>
+  v.toLowerCase().trim();
+
+const toArray = (value: any) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return String(value).split(",").map((s) => s.trim());
+};
+
+const calcMatchScore = (uni: any, interests: string[], subjects: string[], city: string) => {
+  let score = 0;
+  let max = 0;
+
+  // CITY
+  max += 30;
+  if (city && uni.city?.toLowerCase() === city.toLowerCase()) {
+    score += 30;
+  }
+
+  // INTERESTS
+  const uniInterests = toArray(uni.interests).map(normalize);
+  const userInterests = interests.map(normalize);
+
+  max += 35;
+  const interestMatches = uniInterests.filter((i) =>
+    userInterests.includes(i)
+  ).length;
+
+  score += Math.min(35, interestMatches * 10);
+
+  // SUBJECTS
+  const uniSubjects = toArray(uni.subjects).map(normalize);
+  const userSubjects = subjects.map(normalize);
+
+  max += 35;
+  const subjectMatches = uniSubjects.filter((s) =>
+    userSubjects.includes(s)
+  ).length;
+
+  score += Math.min(35, subjectMatches * 10);
+
+  return Math.round((score / max) * 100);
+};
+
 export default function Results() {
   const interests = useStore(s => s.interests);
   const subjects = useStore(s => s.subjects);
   const city = useStore(s => s.city);
 
   const [data, setData] = useState<any>(null);
+  
 
   useEffect(() => {
     // 🔥 не отправляем пустой запрос
@@ -45,6 +90,7 @@ export default function Results() {
   // ✅ теперь после загрузки
   const professions = (data.professions || []).filter((p: any) => p.score > 0);
   const institutions = (data.institutions || []).filter((i: any) => i.score > 0);
+  
 
   return (
 <div className="min-h-screen bg-[#f5f7fb] text-black">
@@ -171,98 +217,148 @@ export default function Results() {
                     </div>
                   )}
 
-{/* WHY THIS UNIVERSITY */}
-<div className="mb-6">
+{/* ================= AI RECOMMENDATION ENGINE ================= */}
+<div className="mb-8">
 
-  <div className="text-sm font-semibold text-gray-500 mb-3">
-    ПОЧЕМУ ЭТОТ ВУЗ ПОДХОДИТ ТЕБЕ
+  <div className="flex items-center justify-between mb-4">
+
+    <div>
+      <div className="text-sm font-semibold text-gray-500">
+        🤖 AI РЕКОМЕНДАЦИЯ
+      </div>
+
+      <div className="text-lg font-bold">
+        Почему этот вуз тебе подходит
+      </div>
+    </div>
+
+    {/* MATCH SCORE BADGE */}
+    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-2xl font-bold shadow-lg">
+      {i.score ? `${Math.min(100, Math.round(i.score))}% match` : "AI match"}
+    </div>
   </div>
 
-  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-5">
+  {/* MAIN CARD */}
+  <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 border border-blue-100 rounded-[28px] p-6 shadow-lg">
 
-    <div className="space-y-3 text-sm">
+    {/* MATCH LEVEL */}
+    <div className="flex items-center gap-3 mb-5">
 
-      {/* CITY */}
-      {city && city === i.city && (
-        <div className="flex items-start gap-3">
-          <div className="text-xl">📍</div>
+      <div className="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white text-xl">
+        🧠
+      </div>
 
-          <div>
-            <div className="font-semibold">
-              Подходит по городу
-            </div>
-
-            <div className="text-gray-600">
-              Ты выбрал город <span className="font-medium">{city}</span>
-            </div>
-          </div>
+      <div>
+        <div className="font-bold text-lg">
+          AI анализ профиля
         </div>
-      )}
 
-      {/* INTERESTS */}
-      {i.interests && (
-        <div className="flex items-start gap-3">
-          <div className="text-xl">💡</div>
-
-          <div>
-            <div className="font-semibold">
-              Совпадают интересы
-            </div>
-
-            <div className="text-gray-600">
-              {i.interests
-                .filter((interest: string) =>
-                  interests.includes(interest.toLowerCase()) ||
-                  interests.includes(interest)
-                )
-                .join(", ") || "Высокое совпадение направлений"}
-            </div>
-          </div>
+        <div className="text-sm text-gray-500">
+          Система сравнила твои интересы, предметы и город
         </div>
-      )}
+      </div>
+    </div>
 
-      {/* SUBJECTS */}
-      {i.subjects && (
-        <div className="flex items-start gap-3">
-          <div className="text-xl">📚</div>
+    {/* BREAKDOWN GRID */}
+    <div className="grid md:grid-cols-2 gap-4">
 
-          <div>
-            <div className="font-semibold">
-              Подходящие предметы
-            </div>
+      {/* CITY MATCH */}
+      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
 
-            <div className="text-gray-600">
-              {(Array.isArray(i.subjects)
-                ? i.subjects
-                : [i.subjects]
-              )
-                .filter((subject: string) =>
-                  subjects.includes(subject.toLowerCase()) ||
-                  subjects.includes(subject)
-                )
-                .join(", ") || "Есть подходящие дисциплины"}
-            </div>
-          </div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">📍</span>
+          <div className="font-semibold">Локация</div>
         </div>
-      )}
 
-      {/* SCORE */}
-      <div className="flex items-start gap-3">
-        <div className="text-xl">🎯</div>
-
-        <div>
-          <div className="font-semibold">
-            AI оценка совместимости
-          </div>
-
-          <div className="text-gray-600">
-            Этот университет имеет высокий процент совпадения
-            с твоим профилем и интересами.
-          </div>
+        <div className="text-sm text-gray-600">
+          {city === i.city ? (
+            <span className="text-green-600 font-medium">
+              ✔ Идеально — ты выбрал этот город
+            </span>
+          ) : (
+            <span>
+              Вуз в городе <b>{i.city}</b>
+            </span>
+          )}
         </div>
       </div>
 
+      {/* INTEREST MATCH */}
+      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">💡</span>
+          <div className="font-semibold">Интересы</div>
+        </div>
+
+        <div className="text-sm text-gray-600">
+          {Array.isArray(i.interests) ? (
+            i.interests.some((x: string) =>
+              interests.includes(x)
+            ) ? (
+              <span className="text-green-600 font-medium">
+                ✔ Высокое совпадение интересов
+              </span>
+            ) : (
+              "Частичное совпадение направлений"
+            )
+          ) : (
+            "Анализ интересов выполнен"
+          )}
+        </div>
+      </div>
+
+      {/* SUBJECT MATCH */}
+      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">📚</span>
+          <div className="font-semibold">Предметы</div>
+        </div>
+
+        <div className="text-sm text-gray-600">
+          {(Array.isArray(i.subjects) ? i.subjects : [i.subjects])
+            .some((s: string) =>
+              subjects.includes(s)
+            ) ? (
+            <span className="text-green-600 font-medium">
+              ✔ Подходит по школьным предметам
+            </span>
+          ) : (
+            "Базовая совместимость"
+          )}
+        </div>
+      </div>
+
+      {/* CAREER FIT */}
+      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">🎯</span>
+          <div className="font-semibold">Карьерный путь</div>
+        </div>
+
+        <div className="text-sm text-gray-600">
+          Этот вуз формирует востребованные профессии
+          на рынке труда Беларуси и СНГ
+        </div>
+      </div>
     </div>
+
+    {/* AI INSIGHT FOOTER */}
+    <div className="mt-5 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+
+      <div className="font-semibold text-indigo-700 mb-1">
+        🧠 AI Insight
+      </div>
+
+      <div className="text-sm text-gray-600">
+        На основе твоего профиля этот университет входит в
+        <b> топ-категорию рекомендаций</b>.
+        Подходит по комбинации: интересы + предметы + город + направления обучения.
+      </div>
+    </div>
+
   </div>
 </div>
 

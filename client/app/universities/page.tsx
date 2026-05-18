@@ -65,8 +65,8 @@ export default function UniversitiesPage() {
           <h1 className="text-4xl font-black mb-2">
             🎓 Университеты
           </h1>
-          <p className="text-gray-600 text-lg">
-            Все университеты из базы данных
+          <p className="text-gray-500 text-lg">
+            Всего университетов: {universities.length}
           </p>
         </div>
 
