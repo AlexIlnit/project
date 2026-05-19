@@ -13,6 +13,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Advantages from "./components/Advantages";
 import Cities from "./components/Cities";
+import CookieConsent from "./components/CookieConsent";
 
 export default function Home() {
   const router = useRouter();
@@ -117,6 +118,7 @@ export default function Home() {
       <Cities/>
       {/* ================= FOOTER ================= */}
       <Footer />
+      <CookieConsent />
     </div>
   );
 }

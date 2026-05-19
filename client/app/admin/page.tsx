@@ -35,18 +35,28 @@ export default function Admin() {
 
   setUsers(storedUsers);
 }, []);
+const [selectedCity, setSelectedCity] = useState("Все");
 const filteredList = useMemo(() => {
-  
   if (!currentUser) return [];
 
-  if (currentUser.role === "superadmin") {
-    return list;
+  let result = list;
+
+  // 1. фильтр по владельцу
+  if (currentUser.role !== "superadmin") {
+    result = result.filter(
+      (i) => String(i.ownerId) === String(currentUser.id)
+    );
   }
 
-  return list.filter(
-  (i) => String(i.ownerId) === String(currentUser.id)
-);
-}, [list, currentUser]);
+  // 2. фильтр по городу
+  if (selectedCity !== "Все") {
+    result = result.filter(
+      (i) => i.city === selectedCity
+    );
+  }
+
+  return result;
+}, [list, currentUser, selectedCity]);
 const getOwnerName = (ownerId: string) => {
 
   if (ownerId === "superadmin") {
@@ -108,7 +118,7 @@ const getOwnerName = (ownerId: string) => {
   const [file, setFile] = useState<File | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
 
-  const [selectedCity, setSelectedCity] = useState("Все");
+  
 
   const [form, setForm] = useState({
     name: "",
