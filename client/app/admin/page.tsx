@@ -13,28 +13,42 @@ export default function Admin() {
   const [editing, setEditing] = useState<any | null>(null);
 
 
-  
+ useEffect(() => {
 
-  useEffect(() => {
-  const token = localStorage.getItem("admin_token");
+  const init = async () => {
 
-  if (!token) {
-    router.push("/login");
-    return;
-  }
+    const token = localStorage.getItem("admin_token");
 
-  const user = JSON.parse(localStorage.getItem("admin_user") || "{}");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-  setCurrentUser(user); // 👈 ВОТ ЭТО ГЛАВНОЕ
+    // current user
+    const user = JSON.parse(
+      localStorage.getItem("admin_user") || "{}"
+    );
 
-  load();
+    setCurrentUser(user);
 
-  const storedUsers = JSON.parse(
-    localStorage.getItem("users") || "[]"
-  );
+    // institutions
+    await load();
 
-  setUsers(storedUsers);
-}, []);
+    // users from mongodb
+    const res = await fetch(
+      "http://localhost:3001/users"
+    );
+
+    const data = await res.json();
+
+    setUsers(data);
+  };
+
+  init();
+
+}, []); 
+
+ 
 const [selectedCity, setSelectedCity] = useState("Все");
 const filteredList = useMemo(() => {
   if (!currentUser) return [];
@@ -44,7 +58,7 @@ const filteredList = useMemo(() => {
   // 1. фильтр по владельцу
   if (currentUser.role !== "superadmin") {
     result = result.filter(
-      (i) => String(i.ownerId) === String(currentUser.id)
+      (i) => String(i.ownerId) === String(currentUser._id)
     );
   }
 
@@ -64,56 +78,59 @@ const getOwnerName = (ownerId: string) => {
   }
 
   const owner = users.find(
-    (u) => String(u.id) === String(ownerId)
+    (u) => String(u._id) === String(ownerId)
   );
 
   return owner?.name || "Unknown";
 };
-  const toggleAccess = (id: number) => {
+  const toggleAccess = async (id: string) => {
 
-    const updated = users.map((u) =>
-      u.id === id
-        ? {
-            ...u,
-            approved: !u.approved
-          }
-        : u
-    );
-
-    setUsers(updated);
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify(updated)
-    );
-  };
-
-  const deleteUser = (id: number) => {
-
-  const updated = users.filter(
-    (u) => u.id !== id
+  const user = users.find(
+    (u) => u._id === id
   );
 
-  setUsers(updated);
+  if (!user) return;
 
-  localStorage.setItem(
-    "users",
-    JSON.stringify(updated)
+  const updatedApproved = !user.approved;
+
+  await fetch(
+    `http://localhost:3001/users/${id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        approved: updatedApproved
+      })
+    }
   );
+
+  const updatedUsers = users.map((u) =>
+    u._id === id
+      ? {
+          ...u,
+          approved: updatedApproved
+        }
+      : u
+  );
+
+  setUsers(updatedUsers);
 };
 
-  // load users
-  useEffect(() => {
+  const deleteUser = async (id: string) => {
 
-    const saved = localStorage.getItem("users");
-
-    if (saved) {
-      setUsers(JSON.parse(saved));
+  await fetch(
+    `http://localhost:3001/users/${id}`,
+    {
+      method: "DELETE"
     }
+  );
 
-  }, []);
-
-  
+  setUsers(
+    users.filter((u) => u._id !== id)
+  );
+};
 
   const [file, setFile] = useState<File | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
@@ -179,7 +196,9 @@ const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
   localStorage.getItem("admin_user") || "{}"
   );
 
-  formData.append("ownerId", String(user.id));
+  formData.append(
+  "ownerId",
+  String(user._id || user.id));
 
   formData.append("name", form.name);
   formData.append("city", form.city);
@@ -281,7 +300,7 @@ const saveEdit = async () => {
     console.error("SAVE EDIT ERROR:", err);
   }
 };
-
+const [showForm, setShowForm] = useState(false);
   return (
     
 <div className="min-h-screen bg-[#f4f7fb] text-black">
@@ -368,16 +387,42 @@ const saveEdit = async () => {
       </div>
 
       <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
-        <div className="text-4xl mb-3">📚</div>
 
-        <div className="text-3xl font-black">
-          EduGuide
-        </div>
+  <div className="text-4xl mb-3">📚</div>
 
-        <div className="text-gray-500 mt-1">
-          Admin dashboard
-        </div>
+  <div className="text-3xl font-black">
+    EduGuide
+  </div>
+
+  <div className="text-gray-500 mt-1">
+    Admin dashboard
+  </div>
+
+  {/* USER INFO */}
+  {currentUser && (
+    <div className="mt-5 space-y-2 text-sm text-gray-600">
+
+      <div className="flex items-center gap-2">
+        📅
+        <span>
+          Регистрация:{" "}
+          {currentUser.createdAt
+            ? new Date(currentUser.createdAt).toLocaleDateString()
+            : "не указана"}
+        </span>
       </div>
+
+      <div className="flex items-center gap-2">
+        🎁
+        <span>
+          Бонусы: {currentUser.bonuses ?? 0}
+        </span>
+      </div>
+
+    </div>
+  )}
+
+</div>
     </div>
 {/* ================= USERS ================= */}
 {currentUser?.role === "superadmin" && (
@@ -406,7 +451,7 @@ const saveEdit = async () => {
       users.map((user: any) => (
 
         <div
-          key={user.id}
+          key={user._id}
           className="flex items-center justify-between bg-gray-50 rounded-2xl p-5 border border-gray-100"
         >
 
@@ -432,13 +477,6 @@ const saveEdit = async () => {
     {user.email}
   </div>
 
-  <div className="text-sm text-gray-600">
-    <span className="font-semibold">
-      🔑 Пароль:
-    </span>{" "}
-    {user.password}
-  </div>
-
 </div>
 
             <div className="mt-2">
@@ -460,7 +498,7 @@ const saveEdit = async () => {
           <div className="flex gap-3">
 
             <button
-              onClick={() => toggleAccess(user.id)}
+              onClick={() => toggleAccess(user._id)}
               className={`px-5 py-3 rounded-2xl text-white font-semibold transition ${
                 user.approved
                   ? "bg-red-500 hover:bg-red-600"
@@ -473,7 +511,7 @@ const saveEdit = async () => {
             </button>
 
             <button
-              onClick={() => deleteUser(user.id)}
+              onClick={() => deleteUser(user._id)}
               className="px-5 py-3 rounded-2xl bg-black text-white font-semibold hover:opacity-80 transition"
             >
               🗑 Удалить
@@ -491,165 +529,190 @@ const saveEdit = async () => {
   </div>
 </div>
 )}
-    {/* ================= FORM ================= */}
-    <div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 p-8 mb-12">
+   {/* ================= ADD BUTTON ================= */}
+<div className="mb-8">
 
-      <div className="flex items-center gap-4 mb-8">
+  <button
+    onClick={() => setShowForm(!showForm)}
+    className="inline-flex items-center gap-3 bg-blue-500 hover:bg-blue-600 transition text-white px-6 py-4 rounded-2xl font-bold shadow-xl shadow-blue-200"
+  >
+    {showForm ? "✖ Закрыть форму" : "➕ Добавить ВУЗ"}
+  </button>
 
-        <div className="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-3xl">
-          ➕
-        </div>
+</div>
 
-        <div>
-          <h2 className="text-3xl font-black">
-            Добавить университет
-          </h2>
+{/* ================= FORM ================= */}
+{showForm && (
+  <div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 p-8 mb-12 animate-in fade-in duration-300">
 
-          <p className="text-gray-500">
-            Заполните информацию об учебном заведении
-          </p>
-        </div>
+    <div className="flex items-center gap-4 mb-8">
+
+      <div className="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-3xl">
+        ➕
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div>
+        <h2 className="text-3xl font-black">
+          Добавить университет
+        </h2>
 
-        {/* INPUT STYLE */}
-        {[
-          {
-            label: "🏫 Название",
-            value: form.name,
-            key: "name"
-          },
-          {
-            label: "🏙 Город",
-            value: form.city,
-            key: "city"
-          },
-          {
-            label: "📍 Адрес",
-            value: form.address,
-            key: "address"
-          },
-          {
-            label: "🌐 Сайт",
-            value: form.website,
-            key: "website"
-          },
-          {
-            label: "📞 Контакты",
-            value: form.contacts,
-            key: "contacts"
-          }
-        ].map((field: any) => (
-          <div key={field.key}>
-            <label  htmlFor={field.key} className="text-sm font-medium text-gray-500 block mb-2">
-              {field.label}
-            </label>
+        <p className="text-gray-500">
+          Заполните информацию об учебном заведении
+        </p>
+      </div>
+    </div>
 
-            <input
-              id={field.key}
-              name={field.key}
-              autoComplete="off"
-              value={field.value}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  [field.key]: e.target.value
-                })
-              }
-              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
-            />
-          </div>
-        ))}
+    <div className="grid md:grid-cols-2 gap-6">
 
-        {/* LARGE INPUTS */}
-        {[
-          {
-            label: "🏛 Факультеты",
-            value: form.faculty,
-            key: "faculty"
-          },
-          {
-            label: "🎓 Специальности",
-            value: form.specialties,
-            key: "specialties"
-          },
-          {
-            label: "📜 Квалификация",
-            value: form.qualification,
-            key: "qualification"
-          },
-          {
-            label: "📚 Предметы",
-            value: form.subjects,
-            key: "subjects"
-          },
-          {
-            label: "🔥 Интересы",
-            value: form.interests,
-            key: "interests"
-          }
-        ].map((field: any) => (
-          <div key={field.key} className="md:col-span-2">
+      {/* INPUT STYLE */}
+      {[
+        {
+          label: "🏫 Название",
+          value: form.name,
+          key: "name"
+        },
+        {
+          label: "🏙 Город",
+          value: form.city,
+          key: "city"
+        },
+        {
+          label: "📍 Адрес",
+          value: form.address,
+          key: "address"
+        },
+        {
+          label: "🌐 Сайт",
+          value: form.website,
+          key: "website"
+        },
+        {
+          label: "📞 Контакты",
+          value: form.contacts,
+          key: "contacts"
+        }
+      ].map((field: any) => (
+        <div key={field.key}>
 
-            <label htmlFor={field.key} className="text-sm font-medium text-gray-500 block mb-2">
-              {field.label}
-            </label>
-
-            <input
-              id={field.key}
-              name={field.key}
-              autoComplete="off"
-              value={field.value}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  [field.key]: e.target.value
-                })
-              }
-              placeholder="через запятую"
-              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
-            />
-          </div>
-        ))}
-
-        {/* IMAGE */}
-        <div className="md:col-span-2">
-
-          <label htmlFor="image" className="text-sm font-medium text-gray-500 block mb-3">
-            🖼 Фото университета
+          <label
+            htmlFor={field.key}
+            className="text-sm font-medium text-gray-500 block mb-2"
+          >
+            {field.label}
           </label>
 
-          <div className="border-2 border-dashed border-gray-300 rounded-3xl p-6 bg-gray-50">
+          <input
+            id={field.key}
+            name={field.key}
+            autoComplete="off"
+            value={field.value}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                [field.key]: e.target.value
+              })
+            }
+            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+          />
+        </div>
+      ))}
 
-            <input
-              id="image"
-              name="image"
-              autoComplete="off"
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              className="w-full"
+      {/* LARGE INPUTS */}
+      {[
+        {
+          label: "🏛 Факультеты",
+          value: form.faculty,
+          key: "faculty"
+        },
+        {
+          label: "🎓 Специальности",
+          value: form.specialties,
+          key: "specialties"
+        },
+        {
+          label: "📜 Квалификация",
+          value: form.qualification,
+          key: "qualification"
+        },
+        {
+          label: "📚 Предметы",
+          value: form.subjects,
+          key: "subjects"
+        },
+        {
+          label: "🔥 Интересы",
+          value: form.interests,
+          key: "interests"
+        }
+      ].map((field: any) => (
+        <div key={field.key} className="md:col-span-2">
+
+          <label
+            htmlFor={field.key}
+            className="text-sm font-medium text-gray-500 block mb-2"
+          >
+            {field.label}
+          </label>
+
+          <input
+            id={field.key}
+            name={field.key}
+            autoComplete="off"
+            value={field.value}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                [field.key]: e.target.value
+              })
+            }
+            placeholder="через запятую"
+            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+          />
+        </div>
+      ))}
+
+      {/* IMAGE */}
+      <div className="md:col-span-2">
+
+        <label
+          htmlFor="image"
+          className="text-sm font-medium text-gray-500 block mb-3"
+        >
+          🖼 Фото университета
+        </label>
+
+        <div className="border-2 border-dashed border-gray-300 rounded-3xl p-6 bg-gray-50">
+
+          <input
+            id="image"
+            name="image"
+            autoComplete="off"
+            type="file"
+            accept="image/*"
+            onChange={handleFile}
+            className="w-full"
+          />
+
+          {form.image && (
+            <img
+              src={form.image}
+              alt="preview"
+              className="mt-5 w-full h-[280px] object-cover rounded-2xl shadow"
             />
-
-            {form.image && (
-              <img
-                src={form.image}
-                alt="preview"
-                className="mt-5 w-full h-[280px] object-cover rounded-2xl shadow"
-              />
-            )}
-          </div>
+          )}
         </div>
       </div>
-
-      <button
-        onClick={add}
-        className="w-full mt-8 bg-blue-500 hover:bg-blue-600 transition text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-blue-200"
-      >
-        💾 Сохранить университет
-      </button>
     </div>
+
+    <button
+      onClick={add}
+      className="w-full mt-8 bg-blue-500 hover:bg-blue-600 transition text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-blue-200"
+    >
+      💾 Сохранить университет
+    </button>
+
+  </div>
+)}
 
     {/* ================= LIST ================= */}
 <div className="space-y-8">
@@ -976,6 +1039,7 @@ const saveEdit = async () => {
     </div>
   </div>
 )}
+<Footer />
 </div>
   );
 }

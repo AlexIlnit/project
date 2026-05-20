@@ -6,6 +6,8 @@ import recommendRoutes from "./routes/recommend.routes.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import User from "./models/User.js";
+import bcrypt from "bcryptjs";
 
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
@@ -106,7 +108,7 @@ app.put("/institutions/:id", upload.single("image"), async (req, res) => {
     const updated = await Institution.findByIdAndUpdate(
       req.params.id,
       updatedData,
-      { new: true }
+      { returnDocument: "after" }
     );
 
     res.json(updated);
@@ -129,4 +131,165 @@ app.delete("/institutions/:id", async (req, res) => {
 
 app.listen(3001, "0.0.0.0", () => {
   console.log("🔥 Server running on 3001");
+});
+// REGISTER
+app.post("/register", async (req, res) => {
+
+  try {
+
+    const { name, email, password } = req.body;
+
+    const exists = await User.findOne({ email });
+
+    if (exists) {
+      return res.status(400).json({
+        message: "Пользователь уже существует"
+      });
+    }
+
+    // HASH PASSWORD
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      approved: false,
+      role: "user"
+    });
+
+    res.json({
+      message: "Пользователь создан"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Ошибка сервера"
+    });
+  }
+});
+// =========================
+// LOGIN
+// =========================
+app.post("/login", async (req, res) => {
+
+  try {
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Неверный email или пароль"
+      });
+    }
+
+    // CHECK PASSWORD
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Неверный email или пароль"
+      });
+    }
+
+    res.json({
+      token: "logged",
+      user
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Ошибка сервера"
+    });
+  }
+});
+// =========================
+// GET USERS
+// =========================
+app.get("/users", async (req, res) => {
+
+  try {
+
+    const users = await User.find();
+
+    res.json(users);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Ошибка сервера"
+    });
+  }
+});
+// =========================
+// DELETE USER
+// =========================
+app.delete("/users/:id", async (req, res) => {
+  try {
+
+    await User.findByIdAndDelete(
+      req.params.id
+    );
+
+    res.json({ ok: true });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+// =========================
+// TOGGLE ACCESS
+// =========================
+app.put("/users/:id/access", async (req, res) => {
+  try {
+
+    const user = await User.findById(req.params.id);
+
+    user.approved = !user.approved;
+
+    await user.save();
+
+    res.json(user);
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+// UPDATE USER
+app.put("/users/:id", async (req, res) => {
+  try {
+
+    const updated = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { returnDocument: "after" }
+    );
+
+    res.json(updated);
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
 });

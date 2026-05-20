@@ -29,49 +29,43 @@ export default function LoginPage() {
   }, [router]);
 
   // ================= AUTH =================
-  const auth = async () => {
+ const auth = async () => {
 
-    setError("");
+  setError("");
 
-    // ====================================================
-    // REGISTER
-    // ====================================================
-    if (isRegister) {
+  // ====================================================
+  // REGISTER
+  // ====================================================
+  if (isRegister) {
 
-      if (!name || !email || !password) {
-        setError("Заполните все поля");
+    if (!name || !email || !password) {
+      setError("Заполните все поля");
+      return;
+    }
+
+    try {
+
+      const res = await fetch(
+        "http://localhost:3001/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Ошибка регистрации");
         return;
       }
-
-      const users = JSON.parse(
-        localStorage.getItem("users") || "[]"
-      );
-
-      // проверка существующего email
-      const exists = users.find(
-        (u: any) => u.email === email
-      );
-
-      if (exists) {
-        setError("Пользователь уже существует");
-        return;
-      }
-
-      const newUser = {
-        id: Date.now(),
-        name,
-        email,
-        password,
-        approved: false,
-        role: "user"
-      };
-
-      users.push(newUser);
-
-      localStorage.setItem(
-        "users",
-        JSON.stringify(users)
-      );
 
       alert(
         "Аккаунт создан. Ожидайте подтверждения администратора."
@@ -83,49 +77,80 @@ export default function LoginPage() {
       setEmail("");
       setPassword("");
 
+    } catch (err) {
+
+      console.error(err);
+
+      setError("Ошибка сервера");
+    }
+
+    return;
+  }
+
+  // ====================================================
+  // SUPER ADMIN
+  // ====================================================
+  if (
+    email === "admin@eduguide.by" &&
+    password === "admin123"
+  ) {
+
+    const superAdmin = {
+      _id: "superadmin",
+      name: "Super Admin",
+      email,
+      role: "superadmin"
+    };
+
+    localStorage.setItem(
+      "admin_token",
+      "logged"
+    );
+
+    localStorage.setItem(
+      "admin_role",
+      "superadmin"
+    );
+
+    localStorage.setItem(
+      "admin_user",
+      JSON.stringify(superAdmin)
+    );
+
+    router.push("/admin");
+
+    return;
+  }
+
+  // ====================================================
+  // LOGIN USERS FROM MONGODB
+  // ====================================================
+  try {
+
+    const res = await fetch(
+      "http://localhost:3001/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(
+        data.message || "Неверный логин"
+      );
       return;
     }
 
-    // ====================================================
-    // SUPER ADMIN
-    // ====================================================
-    if (
-  email === "admin@eduguide.by" &&
-  password === "admin123"
-) {
-  const superAdmin = {
-    id: "superadmin",
-    name: "Super Admin",
-    email,
-    role: "superadmin"
-  };
-
-  localStorage.setItem("admin_token", "logged");
-  localStorage.setItem("admin_role", "superadmin");
-  localStorage.setItem("admin_user", JSON.stringify(superAdmin));
-
-  router.push("/admin");
-  return;
-}
-   
-
-    // ====================================================
-    // USERS LOGIN
-    // ====================================================
-    const users = JSON.parse(
-      localStorage.getItem("users") || "[]"
-    );
-
-    const user = users.find(
-      (u: any) =>
-        u.email === email &&
-        u.password === password
-    );
-
-    if (!user) {
-      setError("Неверный email или пароль");
-      return;
-    }
+    const user = data.user;
 
     // доступ запрещен
     if (!user.approved) {
@@ -137,16 +162,20 @@ export default function LoginPage() {
       return;
     }
 
-    // логин
-    localStorage.setItem("admin_user", JSON.stringify(user));
+    // LOGIN
+    localStorage.setItem(
+      "admin_user",
+      JSON.stringify(user)
+    );
+
     localStorage.setItem(
       "admin_token",
-      "logged"
+      data.token || "logged"
     );
 
     localStorage.setItem(
       "admin_role",
-      "user"
+      user.role
     );
 
     localStorage.setItem(
@@ -155,7 +184,14 @@ export default function LoginPage() {
     );
 
     router.push("/admin");
-  };
+
+  } catch (err) {
+
+    console.error(err);
+
+    setError("Ошибка сервера");
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-black flex flex-col">
